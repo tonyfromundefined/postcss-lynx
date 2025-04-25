@@ -1,5 +1,11 @@
 # postcss-lynx
 
+## 0.1.2
+
+### Patch Changes
+
+- 527b679: feat: enhance variable resolution for deep nesting and theme contexts
+
 ## 0.1.1
 
 ### Patch Changes
