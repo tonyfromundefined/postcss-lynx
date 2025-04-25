@@ -1,6 +1,6 @@
 # PostCSS Lynx
 
-A PostCSS plugin that resolves nested CSS variable references at build time.
+A PostCSS plugin that resolves nested CSS variable references in variable definitions at build time.
 
 ## Installation
 
@@ -55,7 +55,7 @@ module.exports = {
 
 This plugin provides the following features:
 
-1. **Nested Variable Resolution**: Resolves nested CSS variable references to their final values at build time.
+1. **Variable Definition Resolution**: Resolves nested CSS variable references in variable definitions, keeping references in style properties intact.
 2. **Fallback Support**: Uses fallback values when variables are undefined.
 3. **Circular Reference Detection**: Detects circular references between variables and provides warnings.
 
@@ -91,21 +91,24 @@ This plugin provides the following features:
 }
 
 .button {
-  background-color: #3366ff;
+  background-color: var(--button-background);
 }
 
 .button:hover {
-  background-color: #0044cc;
+  background-color: var(--button-hover-background);
 }
 ```
 
 ## Why Use This Plugin?
 
-Some environments or older browsers may not fully support CSS variable cascading. This plugin helps by:
+This plugin helps manage CSS custom properties (variables) by:
 
-1. Pre-computing all variable references at build time
-2. Replacing variable references with their actual values
-3. Maintaining the original variable declarations for better debugging
+1. Resolving nested variable references in variable definitions only
+2. Preserving variable usage in style properties (keeping `var()` references intact)
+3. Ensuring proper variable cascading by pre-resolving variable values at build time
+4. Warning about undefined variables or circular references
+
+This approach ensures your CSS variables have proper values defined at the root, while still allowing runtime features like theme switching to work properly.
 
 ## License
 
