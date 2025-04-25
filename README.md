@@ -62,6 +62,9 @@ This plugin provides the following features:
    - `color-scheme` - May cause issues in some browsers
    - `stroke-dasharray` - SVG property that can be problematic
    - `stroke-dashoffset` - SVG property that can be problematic
+5. **Data Attribute Selector Conversion**: Converts data attribute selectors to class selectors for better compatibility with Lynx platform:
+   - `[data-theme="dark"]` → `[data-theme="dark"], .data-theme__dark`
+   - `[data-seed-color-mode="light-only"]` → `[data-seed-color-mode="light-only"], .data-seed-color-mode__light-only`
 
 ## Example
 
@@ -117,6 +120,42 @@ svg.icon {
 }
 ```
 
+### Data Attribute Selector Conversion Example
+
+#### Input
+
+```css
+[data-theme="dark"] {
+  --color-background: #121212;
+  --color-text: #ffffff;
+}
+
+[data-seed-color-mode="light-only"] {
+  --seed-color-primary: #3366ff;
+}
+
+.card[data-size="large"] {
+  padding: 2rem;
+}
+```
+
+#### Output
+
+```css
+[data-theme="dark"], .data-theme__dark {
+  --color-background: #121212;
+  --color-text: #ffffff;
+}
+
+[data-seed-color-mode="light-only"], .data-seed-color-mode__light-only {
+  --seed-color-primary: #3366ff;
+}
+
+.card[data-size="large"], .card.data-size__large {
+  padding: 2rem;
+}
+```
+
 ## Why Use This Plugin?
 
 This plugin helps manage CSS custom properties (variables) by:
@@ -126,6 +165,7 @@ This plugin helps manage CSS custom properties (variables) by:
 3. Ensuring proper variable cascading by pre-resolving variable values at build time
 4. Warning about undefined variables or circular references
 5. Removing problematic properties (`color-scheme`, `stroke-dasharray`, `stroke-dashoffset`) that might not be supported or might cause rendering issues in some environments
+6. Converting data attribute selectors to class selectors for better compatibility with platforms like Lynx that may not fully support data attribute selectors
 
 This approach ensures your CSS variables have proper values defined at the root, while still allowing runtime features like theme switching to work properly, and preventing issues with unsupported or problematic CSS properties.
 
