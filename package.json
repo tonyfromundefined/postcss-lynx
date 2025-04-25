@@ -1,0 +1,40 @@
+{
+  "name": "postcss-lynx",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonyfromundefined/postcss-lynx.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "bunchee",
+    "format": "biome check --fix",
+    "release": "changeset publish",
+    "test": "vitest run ./src",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@changesets/cli": "^2.27.10",
+    "@vitest/coverage-v8": "^2.0.4",
+    "bunchee": "^6.5.1",
+    "postcss": "^8.5.3",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.4"
+  },
+  "packageManager": "yarn@4.9.1"
+}
