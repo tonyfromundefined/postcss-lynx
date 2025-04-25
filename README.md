@@ -58,7 +58,10 @@ This plugin provides the following features:
 1. **Variable Definition Resolution**: Resolves nested CSS variable references in variable definitions, keeping references in style properties intact.
 2. **Fallback Support**: Uses fallback values when variables are undefined.
 3. **Circular Reference Detection**: Detects circular references between variables and provides warnings.
-4. **color-scheme Removal**: Automatically removes all `color-scheme` property declarations from the CSS.
+4. **Unsupported Property Removal**: Automatically removes potentially problematic properties from CSS:
+   - `color-scheme` - May cause issues in some browsers
+   - `stroke-dasharray` - SVG property that can be problematic
+   - `stroke-dashoffset` - SVG property that can be problematic
 
 ## Example
 
@@ -81,6 +84,13 @@ This plugin provides the following features:
   background-color: var(--button-hover-background);
   color-scheme: inherit;
 }
+
+svg.icon {
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-dasharray: 5 2;
+  stroke-dashoffset: 2;
+}
 ```
 
 ### Output
@@ -100,6 +110,11 @@ This plugin provides the following features:
 .button:hover {
   background-color: var(--button-hover-background);
 }
+
+svg.icon {
+  stroke: currentColor;
+  stroke-width: 2;
+}
 ```
 
 ## Why Use This Plugin?
@@ -110,9 +125,9 @@ This plugin helps manage CSS custom properties (variables) by:
 2. Preserving variable usage in style properties (keeping `var()` references intact)
 3. Ensuring proper variable cascading by pre-resolving variable values at build time
 4. Warning about undefined variables or circular references
-5. Removing `color-scheme` properties that might not be supported in all environments
+5. Removing problematic properties (`color-scheme`, `stroke-dasharray`, `stroke-dashoffset`) that might not be supported or might cause rendering issues in some environments
 
-This approach ensures your CSS variables have proper values defined at the root, while still allowing runtime features like theme switching to work properly.
+This approach ensures your CSS variables have proper values defined at the root, while still allowing runtime features like theme switching to work properly, and preventing issues with unsupported or problematic CSS properties.
 
 ## License
 

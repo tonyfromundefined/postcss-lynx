@@ -3,6 +3,13 @@ import type { PluginCreator } from "postcss";
 const MAX_ITERATIONS = 100;
 const LOG_WARNINGS = true;
 
+// Properties to remove
+const PROPERTIES_TO_REMOVE = [
+  "color-scheme",
+  "stroke-dasharray",
+  "stroke-dashoffset",
+];
+
 const lynx: PluginCreator<{}> = () => {
   const options = {
     maxIterations: MAX_ITERATIONS,
@@ -15,9 +22,9 @@ const lynx: PluginCreator<{}> = () => {
     prepare(result) {
       const varMap = new Map();
 
-      // First, remove all color-scheme declarations throughout the CSS
+      // First, remove all specified property declarations throughout the CSS
       result.root.walkDecls((decl) => {
-        if (decl.prop === "color-scheme") {
+        if (PROPERTIES_TO_REMOVE.includes(decl.prop)) {
           decl.remove();
         }
       });

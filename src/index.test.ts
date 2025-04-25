@@ -150,4 +150,55 @@ describe("postcss-lynx", () => {
     expect(hasThemeColor).toBe(true);
     expect(hasBackgroundColor).toBe(true);
   });
+
+  it("should remove stroke-dasharray and stroke-dashoffset properties", async () => {
+    const input = `
+      svg {
+        stroke: #333;
+        stroke-width: 2px;
+        stroke-dasharray: 5 5;
+        stroke-dashoffset: 10;
+        fill: none;
+      }
+      .path {
+        stroke-dasharray: 10;
+        stroke-dashoffset: 5;
+      }
+    `;
+
+    const result = postcss([lynx()]).process(input, { from: undefined });
+    const root = result.root;
+
+    // Check that stroke-dasharray and stroke-dashoffset are removed
+    let hasDashArray = false;
+    let hasDashOffset = false;
+
+    root.walkDecls((decl) => {
+      if (decl.prop === "stroke-dasharray") {
+        hasDashArray = true;
+      }
+      if (decl.prop === "stroke-dashoffset") {
+        hasDashOffset = true;
+      }
+    });
+
+    expect(hasDashArray).toBe(false);
+    expect(hasDashOffset).toBe(false);
+
+    // Check that other stroke properties are preserved
+    let hasStroke = false;
+    let hasStrokeWidth = false;
+
+    root.walkDecls((decl) => {
+      if (decl.prop === "stroke") {
+        hasStroke = true;
+      }
+      if (decl.prop === "stroke-width") {
+        hasStrokeWidth = true;
+      }
+    });
+
+    expect(hasStroke).toBe(true);
+    expect(hasStrokeWidth).toBe(true);
+  });
 });
