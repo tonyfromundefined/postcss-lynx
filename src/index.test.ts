@@ -14,7 +14,7 @@ describe("postcss-lynx", () => {
     const output = await postcss([lynx()]).process(input, { from: undefined });
 
     expect(output.css).toContain("--color-critical: red;");
-    expect(output.css).toContain(".text { color: red; }");
+    expect(output.css).toContain(".text { color: var(--color-critical); }");
   });
 
   it("should resolve nested variable references", async () => {
@@ -34,25 +34,8 @@ describe("postcss-lynx", () => {
 
     expect(output.css).toContain("--spacing-unit: 16px;");
     expect(output.css).toContain("--spacing-large: calc(16px * 2);");
-    expect(output.css).toContain("padding: calc(16px * 2);");
-    expect(output.css).toContain("margin: 16px;");
-  });
-
-  it("should use fallback values when variables are undefined", async () => {
-    const input = `
-      :root {
-        --primary-color: blue;
-      }
-      .button { 
-        background-color: var(--secondary-color, red);
-        color: var(--primary-color, green);
-      }
-    `;
-
-    const output = await postcss([lynx()]).process(input, { from: undefined });
-
-    expect(output.css).toContain("background-color: red;");
-    expect(output.css).toContain("color: blue;");
+    expect(output.css).toContain("padding: var(--spacing-large);");
+    expect(output.css).toContain("margin: var(--spacing-unit);");
   });
 
   it("should warn about undefined variables without fallbacks", async () => {
@@ -73,8 +56,8 @@ describe("postcss-lynx", () => {
     const output = await postcss([lynx()]).process(input, { from: undefined });
 
     expect(mockWarn).toHaveBeenCalled();
-    expect(output.css).toContain("background: blue;");
     expect(output.css).toContain("color: var(--unknown-var);");
+    expect(output.css).toContain("background: var(--known-var);");
 
     console.warn = originalWarn;
   });

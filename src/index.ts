@@ -67,16 +67,17 @@ const lynx: PluginCreator<{}> = () => {
             );
           }
 
+          // Only update variable declarations, not property values
           result.root.walkDecls((decl) => {
             if (decl.prop.startsWith("--") && varMap.has(decl.prop)) {
               decl.value = varMap.get(decl.prop);
             }
           });
 
+          // Log warnings for undefined variables but don't replace them
           result.root.walkDecls((decl) => {
             if (decl.value?.includes("var(--")) {
               const varRegex = /var\(([^,)]+)(?:,([^)]+))?\)/g;
-              let newValue = decl.value;
               const testValue = decl.value;
               let match: RegExpExecArray | null;
 
@@ -85,18 +86,12 @@ const lynx: PluginCreator<{}> = () => {
                 const varName = match[1].trim();
                 const fallback = match[2] ? match[2].trim() : null;
 
-                if (varMap.has(varName)) {
-                  newValue = newValue.replace(match[0], varMap.get(varName));
-                } else if (fallback) {
-                  newValue = newValue.replace(match[0], fallback);
-                } else if (options.logWarnings) {
+                if (!varMap.has(varName) && !fallback && options.logWarnings) {
                   console.warn(
                     `postcss-lynx: Undefined variable '${varName}' used in '${decl.parent && "selector" in decl.parent ? decl.parent.selector : "unknown location"}'`,
                   );
                 }
               }
-
-              decl.value = newValue;
             }
           });
         },
