@@ -1,5 +1,11 @@
 # postcss-lynx
 
+## 0.1.3
+
+### Patch Changes
+
+- 89c31c4: feat: convert data attribute selectors to class selectors for Lynx compatibility
+
 ## 0.1.2
 
 ### Patch Changes
