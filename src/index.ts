@@ -10,6 +10,15 @@ const PROPERTIES_TO_REMOVE = [
   "stroke-dashoffset",
 ];
 
+/**
+ * PostCSS Lynx Plugin
+ *
+ * A PostCSS plugin that:
+ * 1. Resolves CSS custom property references (including deeply nested ones)
+ * 2. Removes specified CSS properties
+ * 3. Handles theme variables in light/dark mode contexts
+ * 4. Detects circular references and warns about undefined variables
+ */
 const lynx: PluginCreator<{}> = () => {
   const options = {
     maxIterations: MAX_ITERATIONS,
@@ -20,7 +29,9 @@ const lynx: PluginCreator<{}> = () => {
     postcssPlugin: "postcss-lynx",
 
     prepare(result) {
-      const varMap = new Map();
+      // Map to store CSS custom properties and their values by selector
+      // Key: selector, Value: Map of variable names to values
+      const selectorVarMap = new Map<string, Map<string, string>>();
 
       // First, remove all specified property declarations throughout the CSS
       result.root.walkDecls((decl) => {
@@ -29,63 +40,111 @@ const lynx: PluginCreator<{}> = () => {
         }
       });
 
+      // Helper to get selector for a declaration
+      const getSelector = (decl: any): string => {
+        return decl.parent && "selector" in decl.parent
+          ? decl.parent.selector
+          : "unknown";
+      };
+
       return {
         Declaration(decl) {
           // Process CSS custom properties for variable resolution
           if (decl.prop.startsWith("--")) {
-            varMap.set(decl.prop, decl.value);
+            const selector = getSelector(decl);
+
+            // Store in the selector-specific map
+            if (!selectorVarMap.has(selector)) {
+              selectorVarMap.set(selector, new Map());
+            }
+            selectorVarMap.get(selector)?.set(decl.prop, decl.value);
           }
         },
 
         OnceExit() {
-          let resolvedSomething = true;
-          let iterations = 0;
+          // Process each selector context separately
+          for (const [selector, varMap] of selectorVarMap.entries()) {
+            let resolvedSomething = true;
+            let iterations = 0;
 
-          while (resolvedSomething && iterations < options.maxIterations) {
-            resolvedSomething = false;
-            iterations++;
+            // Iterative approach to resolve variable references
+            while (resolvedSomething && iterations < options.maxIterations) {
+              resolvedSomething = false;
+              iterations++;
 
-            for (const [prop, value] of varMap.entries()) {
-              if (value.includes("var(--")) {
-                let newValue = value;
-                const varRegex = /var\(([^,)]+)(?:,([^)]+))?\)/g;
-                let match: RegExpExecArray | null;
-                let madeChange = false;
-                const testValue = value;
+              for (const [prop, value] of varMap.entries()) {
+                if (value.includes("var(--")) {
+                  let newValue = value;
+                  const varRegex = /var\(([^,)]+)(?:,([^)]+))?\)/g;
+                  let match: RegExpExecArray | null;
+                  let madeChange = false;
+                  const testValue = value;
 
-                // biome-ignore lint/suspicious/noAssignInExpressions: needed for regex exec in loop
-                while ((match = varRegex.exec(testValue)) !== null) {
-                  const varName = match[1].trim();
-                  const fallback = match[2] ? match[2].trim() : null;
+                  // biome-ignore lint/suspicious/noAssignInExpressions: needed for regex exec in loop
+                  while ((match = varRegex.exec(testValue)) !== null) {
+                    const varName = match[1].trim();
+                    const fallback = match[2] ? match[2].trim() : null;
 
-                  if (varMap.has(varName)) {
-                    const resolvedValue = varMap.get(varName);
-                    newValue = newValue.replace(match[0], resolvedValue);
-                    madeChange = true;
-                  } else if (fallback) {
-                    newValue = newValue.replace(match[0], fallback);
-                    madeChange = true;
+                    // First try to find the variable in the current selector context
+                    if (varMap.has(varName)) {
+                      const resolvedValue = varMap.get(varName) || "";
+                      newValue = newValue.replace(match[0], resolvedValue);
+                      madeChange = true;
+                    }
+                    // Then try to find it in other selector contexts
+                    else {
+                      let found = false;
+                      for (const [
+                        otherSelector,
+                        otherVarMap,
+                      ] of selectorVarMap.entries()) {
+                        if (
+                          otherSelector !== selector &&
+                          otherVarMap.has(varName)
+                        ) {
+                          const resolvedValue = otherVarMap.get(varName) || "";
+                          newValue = newValue.replace(match[0], resolvedValue);
+                          madeChange = true;
+                          found = true;
+                          break;
+                        }
+                      }
+
+                      // If not found anywhere, use fallback if available
+                      if (!found && fallback) {
+                        newValue = newValue.replace(match[0], fallback);
+                        madeChange = true;
+                      }
+                    }
                   }
-                }
 
-                if (madeChange) {
-                  varMap.set(prop, newValue);
-                  resolvedSomething = true;
+                  if (madeChange) {
+                    varMap.set(prop, newValue);
+                    resolvedSomething = true;
+                  }
                 }
               }
             }
+
+            if (iterations >= options.maxIterations && options.logWarnings) {
+              console.warn(
+                "postcss-lynx: Maximum iterations reached. There might be circular references.",
+              );
+            }
           }
 
-          if (iterations >= options.maxIterations && options.logWarnings) {
-            console.warn(
-              "postcss-lynx: Maximum iterations reached. There might be circular references.",
-            );
-          }
-
-          // Only update variable declarations, not property values
+          // Only update variable declarations with resolved values
           result.root.walkDecls((decl) => {
-            if (decl.prop.startsWith("--") && varMap.has(decl.prop)) {
-              decl.value = varMap.get(decl.prop);
+            if (decl.prop.startsWith("--")) {
+              const selector = getSelector(decl);
+
+              if (
+                selectorVarMap.has(selector) &&
+                selectorVarMap.get(selector)?.has(decl.prop)
+              ) {
+                decl.value =
+                  selectorVarMap.get(selector)?.get(decl.prop) || decl.value;
+              }
             }
           });
 
@@ -95,15 +154,30 @@ const lynx: PluginCreator<{}> = () => {
               const varRegex = /var\(([^,)]+)(?:,([^)]+))?\)/g;
               const testValue = decl.value;
               let match: RegExpExecArray | null;
+              const selector = getSelector(decl);
+              const varMap = selectorVarMap.get(selector);
 
               // biome-ignore lint/suspicious/noAssignInExpressions: needed for regex exec in loop
               while ((match = varRegex.exec(testValue)) !== null) {
                 const varName = match[1].trim();
                 const fallback = match[2] ? match[2].trim() : null;
 
-                if (!varMap.has(varName) && !fallback && options.logWarnings) {
+                // Check if the variable exists in any selector context
+                let exists = false;
+                if (varMap?.has(varName)) {
+                  exists = true;
+                } else {
+                  for (const otherVarMap of selectorVarMap.values()) {
+                    if (otherVarMap.has(varName)) {
+                      exists = true;
+                      break;
+                    }
+                  }
+                }
+
+                if (!exists && !fallback && options.logWarnings) {
                   console.warn(
-                    `postcss-lynx: Undefined variable '${varName}' used in '${decl.parent && "selector" in decl.parent ? decl.parent.selector : "unknown location"}'`,
+                    `postcss-lynx: Undefined variable '${varName}' used in '${selector}'`,
                   );
                 }
               }
