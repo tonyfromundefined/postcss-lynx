@@ -38,6 +38,25 @@ describe("postcss-lynx", () => {
     expect(output.css).toContain("margin: var(--spacing-unit);");
   });
 
+  it("should use fallback values when variables are undefined", async () => {
+    const input = `
+      :root {
+        --primary-color: blue;
+      }
+      .button { 
+        background-color: var(--secondary-color, red);
+        color: var(--primary-color, green);
+      }
+    `;
+
+    const output = await postcss([lynx()]).process(input, { from: undefined });
+
+    expect(output.css).toContain(
+      "background-color: var(--secondary-color, red);",
+    );
+    expect(output.css).toContain("color: var(--primary-color, green);");
+  });
+
   it("should warn about undefined variables without fallbacks", async () => {
     const originalWarn = console.warn;
     const mockWarn = vi.fn();
@@ -82,5 +101,53 @@ describe("postcss-lynx", () => {
     );
 
     console.warn = originalWarn;
+  });
+
+  it("should remove color-scheme properties", async () => {
+    const input = `
+      :root {
+        color-scheme: light dark;
+        --theme-color: blue;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --theme-color: navy;
+        }
+      }
+      body {
+        background-color: var(--theme-color);
+        color-scheme: inherit;
+      }
+    `;
+
+    const result = postcss([lynx()]).process(input, { from: undefined });
+
+    // Get the AST
+    const root = result.root;
+
+    // Check that color-scheme declarations are removed
+    let hasColorScheme = false;
+    root.walkDecls("color-scheme", () => {
+      hasColorScheme = true;
+    });
+
+    expect(hasColorScheme).toBe(false);
+
+    // Check that other properties are preserved
+    let hasThemeColor = false;
+    let hasBackgroundColor = false;
+
+    root.walkDecls((decl) => {
+      if (decl.prop === "--theme-color") {
+        hasThemeColor = true;
+      }
+      if (decl.prop === "background-color") {
+        hasBackgroundColor = true;
+      }
+    });
+
+    expect(hasThemeColor).toBe(true);
+    expect(hasBackgroundColor).toBe(true);
   });
 });

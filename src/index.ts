@@ -15,8 +15,16 @@ const lynx: PluginCreator<{}> = () => {
     prepare(result) {
       const varMap = new Map();
 
+      // First, remove all color-scheme declarations throughout the CSS
+      result.root.walkDecls((decl) => {
+        if (decl.prop === "color-scheme") {
+          decl.remove();
+        }
+      });
+
       return {
         Declaration(decl) {
+          // Process CSS custom properties for variable resolution
           if (decl.prop.startsWith("--")) {
             varMap.set(decl.prop, decl.value);
           }
