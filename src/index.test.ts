@@ -267,18 +267,18 @@ it("should properly handle complex theme variables in light/dark mode contexts",
 
   // Check light theme variables
   expect(output.css).toMatch(
-    /:root,\s*:root\[data-theme="light"\]\s*{[^}]*--color-bg-primary:\s*#f7f8f9/,
+    /:root,\s*:root\[data-theme="light"\](?:,\s*\.data-theme__light)?\s*{[^}]*--color-bg-primary:\s*#f7f8f9/,
   );
   expect(output.css).toMatch(
-    /:root,\s*:root\[data-theme="light"\]\s*{[^}]*--color-text-primary:\s*#2a3038/,
+    /:root,\s*:root\[data-theme="light"\](?:,\s*\.data-theme__light)?\s*{[^}]*--color-text-primary:\s*#2a3038/,
   );
 
   // Check dark theme variables
   expect(output.css).toMatch(
-    /:root\[data-theme="dark"\]\s*{[^}]*--color-bg-primary:\s*#16171b/,
+    /:root\[data-theme="dark"\](?:,\s*\.data-theme__dark)?\s*{[^}]*--color-bg-primary:\s*#16171b/,
   );
   expect(output.css).toMatch(
-    /:root\[data-theme="dark"\]\s*{[^}]*--color-text-primary:\s*#f3f4f5/,
+    /:root\[data-theme="dark"\](?:,\s*\.data-theme__dark)?\s*{[^}]*--color-text-primary:\s*#f3f4f5/,
   );
 
   // Property values should still use var() references

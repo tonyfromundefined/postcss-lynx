@@ -18,6 +18,7 @@ const PROPERTIES_TO_REMOVE = [
  * 2. Removes specified CSS properties
  * 3. Handles theme variables in light/dark mode contexts
  * 4. Detects circular references and warns about undefined variables
+ * 5. Converts data attribute selectors to class selectors for Lynx compatibility
  */
 const lynx: PluginCreator<{}> = () => {
   const options = {
@@ -46,6 +47,41 @@ const lynx: PluginCreator<{}> = () => {
           ? decl.parent.selector
           : "unknown";
       };
+
+      // Helper to convert data attribute selector to class selector
+      const convertDataAttrToClass = (selector: string): string => {
+        // Match data attribute selectors like [data-seed-color-mode="light-only"]
+        const dataAttrRegex = /\[([^\]=]+)(?:=["']?([^"'\]]+)["']?)?\]/g;
+        let match: RegExpExecArray | null;
+        let result = selector;
+
+        // biome-ignore lint/suspicious/noAssignInExpressions: needed for regex exec in loop
+        while ((match = dataAttrRegex.exec(selector)) !== null) {
+          const attrName = match[1];
+          const attrValue = match[2] || "";
+
+          // Only convert data-* attributes
+          if (attrName.startsWith("data-")) {
+            // Create class name: .data-attr-name__value
+            const className = `.${attrName}__${attrValue.replace(/[^\w-]/g, "")}`;
+
+            // Add the class selector alongside the original data attribute selector
+            result = result.replace(match[0], `${match[0]}, ${className}`);
+          }
+        }
+
+        return result;
+      };
+
+      // Convert data attribute selectors to class selectors
+      result.root.walkRules((rule) => {
+        const originalSelector = rule.selector;
+        const convertedSelector = convertDataAttrToClass(originalSelector);
+
+        if (originalSelector !== convertedSelector) {
+          rule.selector = convertedSelector;
+        }
+      });
 
       return {
         Declaration(decl) {
