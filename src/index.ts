@@ -10,6 +10,11 @@ const PROPERTIES_TO_REMOVE = [
   "stroke-dashoffset",
 ];
 
+export type Options = {
+  maxIterations?: number;
+  logWarnings?: boolean;
+};
+
 /**
  * PostCSS Lynx Plugin
  *
@@ -20,11 +25,12 @@ const PROPERTIES_TO_REMOVE = [
  * 4. Detects circular references and warns about undefined variables
  * 5. Converts data attribute selectors to class selectors for Lynx compatibility
  */
-const lynx: PluginCreator<{}> = () => {
-  const options = {
+const lynx: PluginCreator<Options> = (_options) => {
+  const defaultOptions = {
     maxIterations: MAX_ITERATIONS,
     logWarnings: LOG_WARNINGS,
   };
+  const options = { ...defaultOptions, ..._options };
 
   return {
     postcssPlugin: "postcss-lynx",
