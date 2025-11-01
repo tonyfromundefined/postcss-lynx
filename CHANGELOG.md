@@ -1,5 +1,11 @@
 # postcss-lynx
 
+## 0.1.4
+
+### Patch Changes
+
+- 1f19150: add options
+
 ## 0.1.3
 
 ### Patch Changes
