@@ -8,6 +8,29 @@ const PROPERTIES_TO_REMOVE = [
   "color-scheme",
   "stroke-dasharray",
   "stroke-dashoffset",
+  // Lynx unsupported properties
+  "text-transform",
+  "text-decoration",
+  "-webkit-font-smoothing",
+  "-moz-osx-font-smoothing",
+  "box-sizing",
+  "overscroll-behavior",
+  "overscroll-behavior-x",
+  "overscroll-behavior-y",
+  "overflow-behavior",
+  "touch-action",
+  "will-change",
+  "isolation",
+  // CSS Grid (not supported in Lynx)
+  "grid-column",
+  "grid-row",
+  "grid-template-columns",
+  "grid-template-rows",
+  "grid-auto-flow",
+  "grid-auto-columns",
+  "grid-auto-rows",
+  // Outline (not supported in Lynx)
+  "outline-offset",
 ];
 
 export type Options = {
