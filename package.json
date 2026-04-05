@@ -23,7 +23,6 @@
   "scripts": {
     "build": "bunchee",
     "format": "biome check --fix",
-    "release": "changeset publish",
     "test": "vitest run ./src",
     "typecheck": "tsc --noEmit"
   },
